@@ -16,14 +16,16 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
         image_file.show()
         inverted_image.show()
 
-        pos_image_text_list = pytesseract.image_to_string(image_file, config=tesseract_config).split()
-        neg_image_text_list = pytesseract.image_to_string(image_file, config=tesseract_config).split()
-        image_text_list = list(set(pos_image_text_list + neg_image_text_list))
-
         image_text_list = pytesseract.image_to_string(image_file, config=tesseract_config).split()
-        image_text_list_lower = [token.lower() for token in image_text_list]
-        image_text_set = set(image_text_list_lower)
-        print(image_text_list)
+        cont_image_text_list = pytesseract.image_to_string(contrast_image_file, config=tesseract_config).split()
+        bw_image_text_list = pytesseract.image_to_string(bw_image_file, config=tesseract_config).split()
+        neg_image_text_list = pytesseract.image_to_string(inverted_image, config=tesseract_config).split()
+
+        image_text_list = list(set(image_text_list + cont_image_text_list + bw_image_text_list + neg_image_text_list))
+
+        image_text_list_processed = process_tokens(image_text_list)
+        image_text_set = set(image_text_list_processed)
+        print(image_text_set)
 
         # If Tesseract can find the total in the image
         if "total" in image_text_set:
