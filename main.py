@@ -80,7 +80,7 @@ if float(total) > 0.0:
     # button = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="app"]/div/div/div[2]/div/div/div/div/span/div/div/div/div/form/div[2]/span/button')))
     # button.click()
 
-    t.sleep(25)
+    t.sleep(20)
 
 else:
     raise ValueError("No total found")
