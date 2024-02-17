@@ -69,11 +69,14 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
                         if total_value_str.startswith('$'):
                             total_value_str = total_value_str.replace('$', '')  # remove dollar sign
                             total_val = float(total_value_str)  # convert to float
-                            if total_val > 100:
+                            if total_val > 1000:
+                                total_val /= 1000
+                            elif total_val > 100:
                                 total_val /= 100
                     break
         total_val = format(total_val, '.2f')
-        print(total_val)
+        print()
+        print(f"Total is  {total_val}")
     return total_val
 
 
