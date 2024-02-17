@@ -41,13 +41,15 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
             for label in total_labels:
                 if label in words:
                     total_index = words.index(label)
-                    total_value_str = words[total_index + 1]
-                    total_value_str = total_value_str.replace('$', '')  # remove dollar sign
-                    total_val = float(total_value_str)  # convert to float
-                    print(total_val)
+                    if total_index + 1 < len(words):
+                        total_value_str = words[total_index + 1]
+                        if total_value_str.startswith('$'):
+                            total_value_str = total_value_str.replace('$', '')  # remove dollar sign
+                            total_val = float(total_value_str)  # convert to float
+
                     break
-
-
+        total_val = format(total_val, '.2f')
+        print(total_val)
     return total_val
 
 
