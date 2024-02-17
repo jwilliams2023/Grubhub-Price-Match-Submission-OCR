@@ -57,15 +57,17 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
         print("Processed text:")
         print(text)
 
-        text_list = text.split(" ")
-        text_set = set(text_list)
-        price = None
+        text_as_list = text.split(" ")
+        text_as_set = set(text_as_list)
         price_as_float = None
 
+
         for label in total_labels:
-            if label in text_set:
+            print(f'Searching for {label}...')
+            if label in text_as_set:
                 print(f'{label} found in string')
-                price = text_list[text_list.index(label) + 1].replace("$", "")
+                print(text_as_list[text_as_list.index(label) + 1])
+                price = text_as_list[text_as_list.index(label) + 1].replace("$", "")
                 price_as_float = float(price)
                 break
 
