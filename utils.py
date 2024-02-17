@@ -12,26 +12,49 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
         image_path = os.path.join(download_dir, last_download_name)
 
         # Open the image
-        image = Image.open(image_path)
+        image_file = Image.open(image_path)
 
-        # # Convert the image to grayscale
-        # image = image.convert('L')
-        #
-        # # Enhance the contrast of the image
-        # enhancer = ImageEnhance.Contrast(image)
-        # image = enhancer.enhance(2)
+        #print raw tessereact text
+        print("Tesseract text:")
+        print(pytesseract.image_to_string(image_file, config=tesseract_config))
 
+        # Resize image to 50% bigger
+        width, height = image_file.size
+        new_width = int(width // 3)
+        new_height = int(height // 3)
+        resized_image = image_file.resize((new_width, new_height))
+
+        # contrast improved image
+        contrast_filter = ImageEnhance.Contrast(resized_image)
+        contrast_image_file = contrast_filter.enhance(2)
+
+        # convert the contrasted image to black and white values
+        bw_image_file = contrast_image_file.convert('1', dither=Image.NONE)
+
+        # create a negative of the image
+        inverted_image = ImageOps.invert(bw_image_file)
+
+        # Update image_file to the final processed image
+        image_file = inverted_image
 
         # Use Tesseract to do OCR on the image
-        text = pytesseract.image_to_string(image)
+        image_text = pytesseract.image_to_string(image_file, config=tesseract_config).split()
+        cont_image_text = pytesseract.image_to_string(contrast_image_file, config=tesseract_config).split()
+        bw_image_text = pytesseract.image_to_string(bw_image_file, config=tesseract_config).split()
+        neg_image_text = pytesseract.image_to_string(inverted_image, config=tesseract_config).split()
 
-        print("Text extracted by Tesseract:")
+
+        # Concatenate the text from all images
+        text = ' '.join(image_text) + ' ' + ' '.join(cont_image_text) + ' ' + ' '.join(bw_image_text) + ' ' + ' '.join(neg_image_text)
+
+        print("Tesseract joined text: ")
         print(text)
+        print()
 
         # Convert the text to lowercase and remove colons and hyphens
         text = text.lower().replace(':', '').replace('-', '')
 
-        print("edited text:")
+        print("Processed text:")
         print(text)
 
         # Process the text, assuming the total is listed as 'Total: $xx.xx'
@@ -46,7 +69,8 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
                         if total_value_str.startswith('$'):
                             total_value_str = total_value_str.replace('$', '')  # remove dollar sign
                             total_val = float(total_value_str)  # convert to float
-
+                            if total_val > 100:
+                                total_val /= 100
                     break
         total_val = format(total_val, '.2f')
         print(total_val)
