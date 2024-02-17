@@ -76,7 +76,7 @@ if float(total) > 0.0:
 
     t.sleep(8)
 
-    # submit button DO NOT uncommment
+    # submit button DO NOT uncommment unless you want it to automatically submit, i do not for accuracy reasons until software is near perfection
     # button = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="app"]/div/div/div[2]/div/div/div/div/span/div/div/div/div/form/div[2]/span/button')))
     # button.click()
 
@@ -85,4 +85,3 @@ if float(total) > 0.0:
 else:
     raise ValueError("No total found")
 
-#make definitions, add to github, add fucntion calls
