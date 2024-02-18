@@ -81,7 +81,10 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
 
                 elif len(prices) == 1 and "." in set(prices[0]):
                     price_as_float = float(prices[0])
+                    break
 
+                elif len(prices) > 1 and "." in max(prices):
+                    price_as_float = float(max(prices))
                     break
 
                 else:
