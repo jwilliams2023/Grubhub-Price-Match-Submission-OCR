@@ -15,10 +15,10 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
         image_file = Image.open(image_path)
 
         #print raw tessereact text
-        print("Tesseract text:")
-        print(pytesseract.image_to_string(image_file, config=tesseract_config))
+        # print("Tesseract text:")
+        # print(pytesseract.image_to_string(image_file, config=tesseract_config))
 
-        # Resize image to 50% bigger
+        # Resize image
         width, height = image_file.size
         new_width = int(width // 3)
         new_height = int(height // 3)
@@ -45,58 +45,60 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
 
 
         # Concatenate the text from all images
-        text = ' '.join(image_text) + ' ' + ' '.join(cont_image_text) + ' ' + ' '.join(bw_image_text) + ' ' + ' '.join(neg_image_text)
+        text = (
+                ' '.join(image_text) + ' ' +
+                ' '.join(cont_image_text) + ' ' +
+                ' '.join(bw_image_text) + ' ' +
+                ' '.join(neg_image_text)
+                )
 
-        print("Tesseract joined text: ")
-        print(text)
-        print()
+        # print("Tesseract joined text: ")
+        # print(text)
+
 
         # Convert the text to lowercase and remove colons and hyphens
         text = text.lower().replace(':', '').replace('-', '')
+        # print("Processed text:")
+        # print(text)
 
-        print("Processed text:")
-        print(text)
-
-        text_as_list = text.split(" ")
+        text_as_list = text.split()
         text_as_set = set(text_as_list)
         price_as_float = None
 
-
         for label in total_labels:
-            print(f'Searching for {label}...')
+            print(f'\nSearching for {label}...')
             if label in text_as_set:
                 print(f'{label} found in string')
-                print(text_as_list[text_as_list.index(label) + 1])
-                price = text_as_list[text_as_list.index(label) + 1].replace("$", "")
-                price_as_float = float(price)
-                break
 
-        print(price_as_float)
+                price_candidates = [text_as_list[i + 1].strip('$') for i in range(len(text_as_list)) if text_as_list[i] == label]
+                prices = [item for item in price_candidates if item.replace(".", "").isnumeric()]
 
-        # Process the text, assuming the total is listed as 'Total: $xx.xx'
-        lines = text.split('\n')
-        for line in lines:
-            words = line.split()
-            for label in total_labels:
-                if label in words:
-                    total_index = words.index(label)
-                    if total_index + 1 < len(words):
-                        total_value_str = words[total_index + 1]
-                        if total_value_str.startswith('$'):
-                            total_value_str = total_value_str.replace('$', '')  # remove dollar sign
-                            total_val = float(total_value_str)  # convert to float
-                            if total_val > 1000:
-                                total_val /= 1000
-                            elif total_val > 100:
-                                total_val /= 100
+                print(f'Price candidates = {price_candidates}')
+                print(f'Prices = {prices}')
+
+                if len(prices) == 0:
+                    continue
+
+                elif len(prices) == 1 and "." in set(prices[0]):
+                    price_as_float = float(prices[0])
+
                     break
 
-        total_val = format(total_val, '.2f')
-        print()
-        print(f"Total is  {total_val}")
-    return total_val
+                else:
+                    max_price = int(max(prices))
+                    if max_price > 100:
+                        price_as_float = float(max_price / 100)
+                    elif max_price > 1000:
+                        price_as_float = float(max_price / 1000)
 
+                    break
 
+        print(f'Price {price_as_float}')
+        price_as_string = str(price_as_float).format(total_val, '.2f')
+
+        return price_as_string
+
+# Old Method
 # def get_total_price(last_download_name, download_dir, path_to_tesseract):
 #     pytesseract.tesseract_cmd = path_to_tesseract
 #     tesseract_config = r'--oem 1 --psm 4'
@@ -180,8 +182,8 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
 #         raise Exception("No Image Found in Directory")
 #
 #     return format(total, '.2f')
-#
-#
+
+
 # def process_tokens(strings_list):
 #     punctuation = set("'-?!,:;&#%*()_/")
 #     output_list = []
@@ -195,12 +197,3 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
 #         output_list.append(token)
 #
 #     return output_list
-
-# def resize_img(img, scale):
-#
-#     width = int(img.shape[1] * scale / 100)
-#     height = int(img.shape[0] * scale / 100)
-#
-#     dsize = (width, height)
-#
-#     return cv2.resize(img, dsize=dsize)
