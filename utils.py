@@ -12,45 +12,93 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
         image_path = os.path.join(download_dir, last_download_name)
 
         # Open the image
-        image = Image.open(image_path)
+        image_file = Image.open(image_path)
 
-        # # Convert the image to grayscale
-        # image = image.convert('L')
-        #
-        # # Enhance the contrast of the image
-        # enhancer = ImageEnhance.Contrast(image)
-        # image = enhancer.enhance(2)
+        #print raw tessereact text
+        # print("Tesseract text:")
+        # print(pytesseract.image_to_string(image_file, config=tesseract_config))
 
+        # Resize image
+        width, height = image_file.size
+        new_width = int(width // 3)
+        new_height = int(height // 3)
+        resized_image = image_file.resize((new_width, new_height))
+
+        # contrast improved image
+        contrast_filter = ImageEnhance.Contrast(resized_image)
+        contrast_image_file = contrast_filter.enhance(2)
+
+        # convert the contrasted image to black and white values
+        bw_image_file = contrast_image_file.convert('1', dither=Image.NONE)
+
+        # create a negative of the image
+        inverted_image = ImageOps.invert(bw_image_file)
+
+        # Update image_file to the final processed image
+        image_file = inverted_image
 
         # Use Tesseract to do OCR on the image
-        text = pytesseract.image_to_string(image)
+        image_text = pytesseract.image_to_string(image_file, config=tesseract_config).split()
+        cont_image_text = pytesseract.image_to_string(contrast_image_file, config=tesseract_config).split()
+        bw_image_text = pytesseract.image_to_string(bw_image_file, config=tesseract_config).split()
+        neg_image_text = pytesseract.image_to_string(inverted_image, config=tesseract_config).split()
 
-        print("Text extracted by Tesseract:")
-        print(text)
+
+        # Concatenate the text from all images
+        text = (
+                ' '.join(image_text) + ' ' +
+                ' '.join(cont_image_text) + ' ' +
+                ' '.join(bw_image_text) + ' ' +
+                ' '.join(neg_image_text)
+                )
+
+        # print("Tesseract joined text: ")
+        # print(text)
+
 
         # Convert the text to lowercase and remove colons and hyphens
         text = text.lower().replace(':', '').replace('-', '')
+        # print("Processed text:")
+        # print(text)
 
-        print("edited text:")
-        print(text)
+        text_as_list = text.split()
+        text_as_set = set(text_as_list)
+        price_as_float = None
 
-        # Process the text, assuming the total is listed as 'Total: $xx.xx'
-        lines = text.split('\n')
-        for line in lines:
-            words = line.split()
-            for label in total_labels:
-                if label in words:
-                    total_index = words.index(label)
-                    total_value_str = words[total_index + 1]
-                    total_value_str = total_value_str.replace('$', '')  # remove dollar sign
-                    total_val = float(total_value_str)  # convert to float
-                    print(total_val)
+        for label in total_labels:
+            print(f'\nSearching for {label}...')
+            if label in text_as_set:
+                print(f'{label} found in string')
+
+                price_candidates = [text_as_list[i + 1].strip('$') for i in range(len(text_as_list)) if text_as_list[i] == label]
+                prices = [item for item in price_candidates if item.replace(".", "").isnumeric()]
+
+                print(f'Price candidates = {price_candidates}')
+                print(f'Prices = {prices}')
+
+                if len(prices) == 0:
+                    continue
+
+                elif len(prices) == 1 and "." in set(prices[0]):
+                    price_as_float = float(prices[0])
+
                     break
 
+                else:
+                    max_price = int(max(prices))
+                    if max_price > 100:
+                        price_as_float = float(max_price / 100)
+                    elif max_price > 1000:
+                        price_as_float = float(max_price / 1000)
 
-    return total_val
+                    break
 
+        print(f'Price {price_as_float}')
+        price_as_string = str(price_as_float).format(total_val, '.2f')
 
+        return price_as_string
+
+# Old Method
 # def get_total_price(last_download_name, download_dir, path_to_tesseract):
 #     pytesseract.tesseract_cmd = path_to_tesseract
 #     tesseract_config = r'--oem 1 --psm 4'
@@ -134,8 +182,8 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
 #         raise Exception("No Image Found in Directory")
 #
 #     return format(total, '.2f')
-#
-#
+
+
 # def process_tokens(strings_list):
 #     punctuation = set("'-?!,:;&#%*()_/")
 #     output_list = []
@@ -149,12 +197,3 @@ def get_total_price(last_download_name, download_dir, path_to_tesseract):
 #         output_list.append(token)
 #
 #     return output_list
-
-# def resize_img(img, scale):
-#
-#     width = int(img.shape[1] * scale / 100)
-#     height = int(img.shape[0] * scale / 100)
-#
-#     dsize = (width, height)
-#
-#     return cv2.resize(img, dsize=dsize)
